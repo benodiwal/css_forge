@@ -43,23 +43,66 @@ impl Parser {
 
         loop {
             selectors.push(Selector::Simple(self.parse_simple_selector()?));
+            self.consume_whitespace();
+            match self.next_char() {
+                ',' => {
+                    self.consume_char(',')?;
+                    self.consume_whitespace();
+                },
+                '{' => break,
+                _ => return Err(CssParseError::InvalidSelector)
+            }
         }
 
         Ok(selectors)
     }
 
     fn parse_simple_selector(&mut self) -> Result<SimpleSelector, CssParseError> {
-        let selector = SimpleSelector {
+        let mut selector = SimpleSelector {
             tag_name: None,
             id: None,
             class: Vec::new()
         };
+        
+        while !self.eof() {
+            match self.next_char() {
+                '#' => {
+                    self.consume_char('#')?;
+                    selector.id = Some(self.parse_identifier()?);
+                },
+                '.' => {
+                    self.consume_char('.')?;
+                    selector.class.push(self.parse_identifier()?);
+                }
+                '*' => {
+                    self.consume_char('*')?;
+                }
+                c if valid_identifier_char(c) => {
+                    selector.tag_name = Some(self.parse_identifier()?);
+                }
+                _ => break,
+            }
+        }
+
         Ok(selector)
+    }
+
+    fn parse_identifier(&mut self) -> Result<String, CssParseError> {
+        let identifer = self.consume_while(valid_identifier_char);
+        if identifer.is_empty() {
+            Err(CssParseError::InvalidValue)
+        } else {
+            Ok(identifer)
+        }
     }
 
     fn parse_declarations(&mut self) -> Result<Vec<Declaration>, CssParseError> {
         let declarations = Vec::new();
         Ok(declarations)
+    }
+
+    fn consume_declaration(&mut self) -> Result<Declaration, CssParseError> {
+        todo!()
     }
 
     fn consume_whitespace(&mut self) {
@@ -98,4 +141,8 @@ impl Parser {
         self.poisition >= self.input.len()
     }
 
+}
+
+fn valid_identifier_char(c: char) -> bool {
+    c.is_alphanumeric() || c == '-' || c == '_'
 }
