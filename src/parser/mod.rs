@@ -1,4 +1,4 @@
-use crate::{css::{Declaration, Rule, Selector, SimpleSelector, StyleSheet}, errors::CssParseError};
+use crate::{css::{Declaration, Rule, Selector, SimpleSelector, StyleSheet, Value}, errors::CssParseError};
 
 pub struct Parser {
     input: String,
@@ -97,11 +97,34 @@ impl Parser {
     }
 
     fn parse_declarations(&mut self) -> Result<Vec<Declaration>, CssParseError> {
-        let declarations = Vec::new();
+        let mut declarations = Vec::new();
+
+        loop {
+            self.consume_whitespace();
+            if self.next_char() == '}' { break; }
+            let declaration = self.parse_declaration()?;
+            declarations.push(declaration);
+            self.consume_whitespace();
+            self.consume_char(';')?;
+        }
+
         Ok(declarations)
     }
 
-    fn consume_declaration(&mut self) -> Result<Declaration, CssParseError> {
+    fn parse_declaration(&mut self) -> Result<Declaration, CssParseError> {
+        let property_name = self.parse_identifier()?;
+        self.consume_whitespace();
+        self.consume_char(':')?;
+        self.consume_whitespace();
+        let value = self.parse_value()?;
+
+        Ok(Declaration {
+            name: property_name,
+            value
+        })
+    }
+
+    fn parse_value(&mut self) -> Result<Value, CssParseError> {
         todo!()
     }
 
