@@ -1,4 +1,4 @@
-use crate::{css::{Declaration, Rule, Selector, SimpleSelector, StyleSheet, Value}, errors::CssParseError};
+use crate::{css::{Color, Declaration, Rule, Selector, SimpleSelector, StyleSheet, Value}, errors::CssParseError};
 
 pub struct Parser {
     input: String,
@@ -125,7 +125,28 @@ impl Parser {
     }
 
     fn parse_value(&mut self) -> Result<Value, CssParseError> {
+        match self.next_char() {
+            '0'..='9' => self.parse_length(),
+            '#' => self.parse_color(),
+            _ => Ok(Value::Keyword(self.parse_identifier()?))
+        }
+    }
+
+    fn parse_length(&mut self) -> Result<Value, CssParseError> {
         todo!()
+    }
+
+    fn parse_color(&mut self) -> Result<Value, CssParseError> {
+        self.consume_char('#')?;
+        let color_str = self.consume_while(|c| c.is_ascii_hexdigit());
+        if color_str.len() != 6 {
+            return Err(CssParseError::InvalidColor);
+        }
+        let r = u8::from_str_radix(&color_str[0..2], 16).map_err(|_| CssParseError::InvalidColor)?;
+        let g = u8::from_str_radix(&color_str[2..4], 16).map_err(|_| CssParseError::InvalidColor)?;
+        let b = u8::from_str_radix(&color_str[4..6], 16).map_err(|_| CssParseError::InvalidColor)?;
+
+        Ok(Value::ColorValue(Color { r, g, b, a: 255 }))
     }
 
     fn consume_whitespace(&mut self) {
