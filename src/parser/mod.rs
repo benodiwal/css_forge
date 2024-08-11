@@ -1,4 +1,4 @@
-use crate::{css::{Color, Declaration, Rule, Selector, SimpleSelector, StyleSheet, Value}, errors::CssParseError};
+use crate::{css::{Color, Declaration, Rule, Selector, SimpleSelector, StyleSheet, Unit, Value}, errors::CssParseError};
 
 pub struct Parser {
     input: String,
@@ -133,7 +133,20 @@ impl Parser {
     }
 
     fn parse_length(&mut self) -> Result<Value, CssParseError> {
-        todo!()
+        let num_str = self.consume_while(|c| c.is_ascii_digit() || c == '.');
+        let num = num_str.parse::<f32>().map_err(|_| CssParseError::InvalidValue)?;
+        let unit = self.parse_unit()?;
+        Ok(Value::Length(num, unit))
+    }
+
+    fn parse_unit(&mut self) -> Result<Unit, CssParseError> {
+        let unit_str = self.parse_identifier()?;
+        match &unit_str.to_lowercase()[..] {
+            "px" => Ok(Unit::Px),
+            "em" => Ok(Unit::Em),
+            "rem" => Ok(Unit::Rem),
+            _ => Err(CssParseError::InvalidUnit)
+        }
     }
 
     fn parse_color(&mut self) -> Result<Value, CssParseError> {
