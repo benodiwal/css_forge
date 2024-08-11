@@ -18,7 +18,7 @@ pub enum Selector {
 pub struct SimpleSelector {
     pub tag_name: Option<String>,
     pub id: Option<String>,
-    pub class: Option<String>,
+    pub class: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
